@@ -1,4 +1,4 @@
-
+google-generativeai
 mongo
 python-dotenv
 google-generativeai
