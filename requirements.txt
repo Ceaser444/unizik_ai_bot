@@ -4,3 +4,4 @@ python-dotenv
 google-generativeai
 gunicorn
 python-telegram-bot==21.4
+google-generativeai==0.5.2
