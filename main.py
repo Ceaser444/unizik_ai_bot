@@ -85,12 +85,13 @@ def is_creator_info_query(text: str) -> bool:
 def ask_gemini(prompt: str, max_output_tokens: int = 800) -> str:
     # Combine system prompt + user prompt into one content string
     content = SYSTEM_PROMPT + "\n\nUser: " + prompt + "\n\nAssistant:"
-    resp = genai.Client().models.generate_content(
-        model=GEN_MODEL,
-        contents=content,
-        max_output_tokens=max_output_tokens,
-        temperature=0.2,
+
+    model = genai.GenerativeModel(GEN_MODEL)
+    response = model.generate_content(
+        content,
+        generation_config={"max_output_tokens": max_output_tokens, "temperature": 0.2},
     )
+    return response.text
     # Some clients return .text or .content; handle common shapes
     if hasattr(resp, "text") and resp.text:
         return resp.text.strip()
