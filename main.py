@@ -42,8 +42,7 @@ else:
 
 # configure OpenAI
 openai.api_key = OPENAI_API_KEY
-MODEL = "gpt-4-turbo"
-
+MODEL = "gpt-4o"
 # helper: simple rule-based educational classifier
 EDU_KEYWORDS = {
     "define", "definition", "explain", "what", "why", "how", "solve", "calculate",
