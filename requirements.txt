@@ -3,3 +3,4 @@ mongo
 python-dotenv
 google-generativeai
 gunicorn
+python-telegram-bot==21.4
