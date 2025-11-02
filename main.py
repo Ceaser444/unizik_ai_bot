@@ -14,7 +14,7 @@ from telegram.ext import (
 
 # Gemini client
 try:
-    from google import genai
+    import google.generativeai as genai
 except Exception:
     # If you use different package name on your system, install google-genai / google-generativeai
     raise RuntimeError("Install the Gemini client: pip install -U google-genai (or google-generativeai)")
