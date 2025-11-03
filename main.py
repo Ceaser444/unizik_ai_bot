@@ -11,14 +11,14 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-import openai  # replaced Gemini with OpenAI
+from openai import OpenAI  # using the new OpenAI client (works with OpenRouter)
 
-# logging
+# logging setup
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
-# env & config
+# environment variables
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
@@ -29,21 +29,25 @@ CREATOR_WHATSAPP = "https://wa.link/i7s2lh"
 if not TOKEN or not OPENAI_API_KEY:
     raise RuntimeError("Missing TELEGRAM_TOKEN or OPENAI_API_KEY in environment variables.")
 
-# load system prompt (teaching personality)
+# load system prompt
 with open(SYSTEM_PROMPT_PATH, "r", encoding="utf-8") as f:
     SYSTEM_PROMPT = f.read().strip()
 
-# mongo (optional)
+# MongoDB (optional)
 if MONGO_URI:
-    client = MongoClient(MONGO_URI)
-    db = client["unizik_ai"]
+    client_mongo = MongoClient(MONGO_URI)
+    db = client_mongo["unizik_ai"]
 else:
     db = None
 
-# configure OpenAI
-openai.api_key = OPENAI_API_KEY
-MODEL = "gpt-4o"
-# helper: simple rule-based educational classifier
+# Configure OpenRouter API
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENAI_API_KEY
+)
+MODEL = "gpt-4-turbo"
+
+# keywords for classification
 EDU_KEYWORDS = {
     "define", "definition", "explain", "what", "why", "how", "solve", "calculate",
     "theorem", "proof", "example", "syllabus", "lecture", "course", "exam", "past question",
@@ -65,28 +69,32 @@ def is_educational(text: str) -> bool:
 
 def is_creator_query(text: str) -> bool:
     t = text.lower()
-    return any(phrase in t for phrase in ("who created you", "who made you", "who developed you", "who is your creator", "your creator"))
+    return any(phrase in t for phrase in (
+        "who created you", "who made you", "who developed you", "who is your creator", "your creator"
+    ))
 
 def is_creator_info_query(text: str) -> bool:
     t = text.lower()
-    return any(phrase in t for phrase in ("creator info", "owner info", "contact the creator", "contact info", "who is okafor", "how to contact okafor", "my info"))
+    return any(phrase in t for phrase in (
+        "creator info", "owner info", "contact the creator", "contact info", "who is okafor", "how to contact okafor", "my info"
+    ))
 
-# call GPT-4-Turbo for a deep answer
+# call GPT-4-turbo (via OpenRouter)
 def ask_gpt(prompt: str, max_output_tokens: int = 800) -> str:
     try:
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ]
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=MODEL,
             messages=messages,
             temperature=0.7,
             max_tokens=max_output_tokens,
         )
-        return response["choices"][0]["message"]["content"].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        logging.error(f"OpenAI error: {e}")
+        logging.error(f"OpenRouter error: {e}")
         return "Sorry — I couldn't reach the AI service right now."
 
 # Telegram handlers
